@@ -49,6 +49,22 @@ public class AddressBookContacts {
         this.firstName = firstName;
     }
 
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
     public String getCity() {
         return city;
     }
