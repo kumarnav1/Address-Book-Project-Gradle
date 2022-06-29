@@ -1,15 +1,15 @@
 package address_book_system;
 
+import com.google.gson.Gson;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,15 +23,15 @@ public class ProcessAddressBook {
     Map<String, List<AddressBookContacts>> cityAndPersonMap;
     Map<String, List<AddressBookContacts>> stateAndPersonMap;
 
-    public void addNewContact() {
+    public void addNewContact() throws IOException {
         System.out.println("\n You have chosen to Add a new contact details.\n");
 
         System.out.println("\n Enter the book name ");
         String bookName = scanner.next();
 
-        System.out.println("\n Enter 1 if you want to add the contact using .csv file or \n Enter anything to add contact using console.");
-
-        if (scanner.nextInt() == 1) {
+        System.out.println("\n Enter 1 if you want to add the contact using .csv file, \n 2 if you want to add form json file or \n Enter any character to add contact using console.");
+        String inputChoice = scanner.next();
+        if (inputChoice.equals("1")) {
             try {
                 ArrayList<AddressBookContacts> csvToBean = (ArrayList<AddressBookContacts>) new CsvToBeanBuilder(new FileReader("Resources//person.csv"))
                         .withType(AddressBookContacts.class)
@@ -46,6 +46,16 @@ public class ProcessAddressBook {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        } else if (inputChoice.equals("2")) {
+            ArrayList<AddressBookContacts> contactList;
+            Path filePath = Paths.get("Resources//forReadingJSONfile.json");
+            try (Reader reader = Files.newBufferedReader(filePath)) {
+                Gson gson = new Gson();
+                contactList = new ArrayList<AddressBookContacts>(Arrays.asList(gson.fromJson(reader, AddressBookContacts[].class)));
+                multipleAddressBookMap.put(bookName, contactList);
+                System.out.println("From jason file data has been added to address book inside book : " + bookName);
+                System.out.println(contactList);
             }
         } else {
             System.out.print("Enter contact's first name : ");
@@ -107,27 +117,36 @@ public class ProcessAddressBook {
         displayAddedDetails(addressBookContacts);
     }
 
-    void writeDataToCSV() throws CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
-        System.out.println("Enter 1 to print data to a .csv file or any character to display data in console.");
-        if (scanner.nextInt() == 1) {
-            if (multipleAddressBookMap.isEmpty()) {
-                System.out.println("No book exist in the Data base.");
-                return;
-            }
-            System.out.println("Enter the address book name to sort the Entries: ");
-            displayAllAddressBooksName();
-            System.out.println("Your Entries: ");
-            String getBook = scanner.next();
-            ArrayList<AddressBookContacts> contactsInEachList = multipleAddressBookMap.get(getBook);
+    void writeDataToCSV() throws CsvDataTypeMismatchException, CsvRequiredFieldEmptyException, IOException {
+        if (multipleAddressBookMap.isEmpty()) {
+            System.out.println("No book exist in the Data base.");
+            return;
+        }
+        System.out.println("Enter 1 to print data to a .csv file, \n 2 to write in json file and \n any character to display data in console.");
+        String userChoice = scanner.next();
+        System.out.println("Enter the address book name: ");
+        displayAllAddressBooksName();
+        System.out.print("Your Entries: ");
+        String getBook = scanner.next();
+        ArrayList<AddressBookContacts> contactsInList = multipleAddressBookMap.get(getBook);
+        if (userChoice.equals("1")) {
             try (Writer writer = Files.newBufferedWriter(Paths.get("Resources\\personDisplay.csv"))) {
                 StatefulBeanToCsvBuilder<AddressBookContacts> builder = new StatefulBeanToCsvBuilder<>(writer);
                 StatefulBeanToCsv<AddressBookContacts> beanWriter = builder.build();
-                beanWriter.write(contactsInEachList);
+                beanWriter.write(contactsInList);
                 System.out.println("Data successfully written on the .csv file.");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else
+        } else if(userChoice.equals("2")){
+            Path filePath = Paths.get("Resources//forWritingJSONFile.json");
+            Gson gson = new Gson();
+            String json = gson.toJson(contactsInList);
+            FileWriter writer = new FileWriter(String.valueOf((filePath)));
+            writer.write(json);
+            writer.close();
+            System.out.println("Data successfully written on the JSON file.");
+        }else
             displayPersonDetails();
     }
 
@@ -234,7 +253,7 @@ public class ProcessAddressBook {
             return null;
         }
         System.out.println("Enter the address book name first. \n ");
-        System.out.println("Your choice: ");
+        System.out.print("Your choice: ");
         String bookName = scanner.next();
         if (!multipleAddressBookMap.containsKey(bookName)) {
             System.out.println("Book Doesn't match.");
@@ -327,7 +346,7 @@ public class ProcessAddressBook {
         }
         System.out.println("Enter the address book name to sort the Entries: ");
         displayAllAddressBooksName();
-        System.out.println("Your Entries: ");
+        System.out.print("Your Entries: ");
         String getBook = scanner.next();
         ArrayList<AddressBookContacts> newList = multipleAddressBookMap.get(getBook);
         newList.sort(Comparator.comparing(AddressBookContacts::getFirstName));
@@ -341,7 +360,7 @@ public class ProcessAddressBook {
         }
         System.out.println("Enter the address book name to sort the Entries: ");
         displayAllAddressBooksName();
-        System.out.println("Your Entries: ");
+        System.out.print("Your Entries: ");
         String getBook = scanner.next();
         ArrayList<AddressBookContacts> newList = multipleAddressBookMap.get(getBook);
 
@@ -357,7 +376,7 @@ public class ProcessAddressBook {
         }
         System.out.println("Enter the address book name to sort the Entries: ");
         displayAllAddressBooksName();
-        System.out.println("Your Entries: ");
+        System.out.print("Your Entries: ");
         String getBook = scanner.next();
         ArrayList<AddressBookContacts> newList = multipleAddressBookMap.get(getBook);
 
@@ -373,7 +392,7 @@ public class ProcessAddressBook {
         }
         System.out.println("Enter the address book name to sort the Entries: ");
         displayAllAddressBooksName();
-        System.out.println("Your Entries: ");
+        System.out.print("Your Entries: ");
         String getBook = scanner.next();
         ArrayList<AddressBookContacts> newList = multipleAddressBookMap.get(getBook);
 
