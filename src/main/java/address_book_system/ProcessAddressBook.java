@@ -24,7 +24,6 @@ public class ProcessAddressBook {
     Map<String, List<AddressBookContacts>> stateAndPersonMap;
 
     public void addNewContact() {
-
         System.out.println("\n You have chosen to Add a new contact details.\n");
 
         System.out.println("\n Enter the book name ");
@@ -109,10 +108,8 @@ public class ProcessAddressBook {
     }
 
     void writeDataToCSV() throws CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
-
-        System.out.println("Enter 1 to print data to a .csv file");
+        System.out.println("Enter 1 to print data to a .csv file or any character to display data in console.");
         if (scanner.nextInt() == 1) {
-
             if (multipleAddressBookMap.isEmpty()) {
                 System.out.println("No book exist in the Data base.");
                 return;
